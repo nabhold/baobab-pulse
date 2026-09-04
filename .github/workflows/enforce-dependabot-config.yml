@@ -1,0 +1,25 @@
+name: Enforce Dependabot Config
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/dependabot.yml"
+  pull_request:
+    paths:
+      - ".github/dependabot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    permissions:
+      contents: read
+    # Pin is nabhold/shared's v1.2.0 tag (annotated — peeled commit, not
+    # the tag object's own SHA), verified live via
+    # `git ls-remote --tags https://github.com/nabhold/shared.git v1.2.0`.
+    uses: nabhold/shared/.github/workflows/enforce-dependabot-config.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      required-ecosystems: "github-actions,uv,docker"

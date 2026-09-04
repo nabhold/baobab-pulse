@@ -1,0 +1,35 @@
+name: Security — Python (Bandit + pip-audit)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "bandit.yaml"
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "bandit.yaml"
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    permissions:
+      contents: read
+    # Pin is nabhold/shared's v1.2.0 tag (annotated — peeled commit, not
+    # the tag object's own SHA), verified live via
+    # `git ls-remote --tags https://github.com/nabhold/shared.git v1.2.0`.
+    uses: nabhold/shared/.github/workflows/security-python.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      bandit-config-path: "bandit.yaml"
+      bandit-target: "src"
+      dependency-group: "security"
