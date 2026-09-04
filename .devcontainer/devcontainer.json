@@ -4,10 +4,16 @@
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
   "init": true,
-  "postCreateCommand": "printf 'Baobab Pulse runtime scaffold is intentionally pending.\\n'",
+  "postCreateCommand": "uv sync --all-groups",
   "customizations": {
     "vscode": {
-      "extensions": ["github.vscode-github-actions", "redhat.vscode-yaml"]
+      "extensions": [
+        "github.vscode-github-actions",
+        "redhat.vscode-yaml",
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.mypy-type-checker"
+      ]
     }
   }
 }

@@ -1,0 +1,72 @@
+"""Translate every error into ``application/problem+json`` (item 120).
+
+No Haystack, asyncpg, or other infrastructure exception structure ever
+reaches an HTTP response — everything is mapped to
+``contracts.errors.ProblemDetails`` here, at the outermost boundary.
+"""
+
+from __future__ import annotations
+
+import logging
+from uuid import uuid4
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from baobab_pulse.contracts.errors import ProblemDetails
+from baobab_pulse.domain.shared.errors import (
+    InvariantViolation,
+    PulseError,
+    TenantContextMissingError,
+)
+from baobab_pulse.infrastructure.haystack.errors import PulseHaystackError
+
+logger = logging.getLogger(__name__)
+
+_STATUS_BY_ERROR: tuple[tuple[type[PulseError], int, str, bool], ...] = (
+    (TenantContextMissingError, 400, "TENANT_CONTEXT_MISSING", False),
+    (InvariantViolation, 422, "DOMAIN_INVARIANT_VIOLATION", False),
+    (PulseHaystackError, 502, "INTELLIGENCE_ENGINE_UNAVAILABLE", True),
+)
+
+
+def register_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(PulseError)
+    async def handle_pulse_error(request: Request, exc: PulseError) -> JSONResponse:
+        status_code, code, retryable = 500, "PULSE_INTERNAL_ERROR", False
+        for error_type, mapped_status, mapped_code, mapped_retryable in _STATUS_BY_ERROR:
+            if isinstance(exc, error_type):
+                status_code, code, retryable = mapped_status, mapped_code, mapped_retryable
+                break
+        problem = ProblemDetails(
+            type=f"https://contracts.nabhold.com/errors/v1/{code.lower()}",
+            title=type(exc).__name__,
+            status=status_code,
+            detail=str(exc),
+            code=code,
+            correlation_id=uuid4(),
+            retryable=retryable,
+        )
+        return JSONResponse(
+            status_code=status_code,
+            content=problem.model_dump(mode="json", exclude_none=True),
+            media_type="application/problem+json",
+        )
+
+    @app.exception_handler(Exception)
+    async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("unhandled_exception")
+        problem = ProblemDetails(
+            type="https://contracts.nabhold.com/errors/v1/internal_error",
+            title="Internal Server Error",
+            status=500,
+            detail="An unexpected error occurred.",
+            code="INTERNAL_ERROR",
+            correlation_id=uuid4(),
+            retryable=False,
+        )
+        return JSONResponse(
+            status_code=500,
+            content=problem.model_dump(mode="json", exclude_none=True),
+            media_type="application/problem+json",
+        )

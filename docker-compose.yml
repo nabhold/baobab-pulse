@@ -1,0 +1,41 @@
+# Local development topology only (item 115-116): Pulse API + PostgreSQL.
+# Production orchestration belongs to nabhold/infrastructure — this file
+# does not duplicate that, it only makes `docker compose up` a viable local
+# loop for a contributor who wants to exercise the API against a real
+# PostgreSQL instead of the in-memory repositories the test suite uses.
+
+services:
+  postgres:
+    image: postgres:17.11-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+      POSTGRES_DB: baobab_pulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pulse-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse -d baobab_pulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pulse-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PULSE_DATABASE_URL: postgresql://pulse:pulse@postgres:5432/baobab_pulse
+      PULSE_ENVIRONMENT: local
+      PULSE_LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+
+volumes:
+  pulse-postgres-data:

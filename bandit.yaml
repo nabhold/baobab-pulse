@@ -1,0 +1,24 @@
+# Bandit configuration for Baobab Pulse.
+#
+# POLICY RATIONALE
+# ----------------
+# Recommended CI invocation: `bandit -c bandit.yaml -r . -ll -ii`
+#   -ll  report only MEDIUM+ severity findings
+#   -ii  report only MEDIUM+ confidence findings
+# This keeps the gate meaningful (a LOW/LOW finding is usually noise on a
+# young codebase) without silencing anything a reviewer should actually see.
+# `security-python.yml` (this repo's CI workflow) runs exactly this
+# invocation — see nabhold/shared's reusable workflow of the same name.
+
+exclude_dirs:
+  - tests
+  - .venv
+  - examples
+
+# B104 (hardcoded bind to 0.0.0.0) is expected for a container-internal ASGI
+# server fronted by an ingress/load balancer (see
+# `configuration.settings.Settings.api_host`) — not a real exposure on its
+# own, so it is suppressed globally rather than inline-`# noqa`'d at every
+# call site.
+skips:
+  - B104

@@ -1,0 +1,100 @@
+[project]
+name = "baobab-pulse"
+version = "0.1.0"
+description = "Baobab Pulse — the Baobab Platform's Intelligence, Research and Evidence Engine."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "GPL-3.0-or-later" # matches the committed LICENSE file — see docs/operations/license-note.md
+authors = [{ name = "Nabhold" }]
+dependencies = [
+    "asyncpg>=0.30,<1",
+    "fastapi>=0.115,<1",
+    "haystack-ai==3.1.1",
+    "jsonschema>=4.23,<5",
+    "opentelemetry-api>=1.27,<2",
+    "opentelemetry-sdk>=1.27,<2",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6,<3",
+    "python-dotenv>=1.0,<2",
+    "uvicorn>=0.32,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/baobab_pulse"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28,<1",
+    "mypy>=1.13,<2",
+    "pytest>=9.0.3,<10",
+    "pytest-asyncio>=1.0,<2",
+    "referencing>=0.35,<1",
+    "ruff>=0.7,<1",
+]
+security = [
+    "bandit>=1.7,<2",
+    "pip-audit>=2.7,<3",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TID"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["TID252"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["baobab_pulse"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection idiom is `param: T = Depends(...)` — a
+# function call in an argument default that bugbear otherwise (correctly,
+# in the general case) flags as a mutable-default footgun.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
+
+[tool.mypy]
+python_version = "3.14"
+packages = ["baobab_pulse"]
+mypy_path = "src"
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "haystack.*"
+ignore_missing_imports = true
+implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = ["asyncpg", "asyncpg.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "opentelemetry.exporter.otlp.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "architecture: enforces module dependency boundaries",
+    "contract: validates payloads against nabhold/shared contract schemas",
+    "provider: requires a real, credentialed model-provider API (opt-in, excluded by default)",
+]
+# The default test run excludes "provider" tests — see the Makefile's "test" target
+# (`-m "not provider"`), which keeps the core suite free of external API credentials.
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
