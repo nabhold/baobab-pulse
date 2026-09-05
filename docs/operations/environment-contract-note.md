@@ -1,11 +1,19 @@
 # Known issue: `.nabhold/environment.yaml` vs. Foundation Repository Gates
 
-**Status:** Open, not resolved by this scaffold — flagged per the platform
-brief's "do not work around a shared-contract conflict silently" rule
-(item 135). This repository has no authority to change `nabhold/shared`,
-and rolling this repository's own declaration backward would misrepresent
-its actual `baobab-dev` requirement, so neither side is silently patched
-here.
+**Status:** Resolved upstream. `nabhold/shared#14` fixed the comparison
+(`String#start_with?` -> a real `Gem::Version` `>=` floor check) and
+merged as `nabhold/shared@2da1a429602d2f1421c498d412bb6c65a5626127`; this
+repository's `.github/workflows/foundation.yml` now pins that commit (no
+tagged release covers it yet — repin to a tag once `nabhold/shared` cuts
+one that includes it). The history below is kept for context on how the
+conflict was originally diagnosed and why neither side was silently
+patched in the interim.
+
+Originally flagged per the platform brief's "do not work around a
+shared-contract conflict silently" rule (item 135): this repository had no
+authority to change `nabhold/shared`, and rolling this repository's own
+declaration backward would have misrepresented its actual `baobab-dev`
+requirement, so neither side was silently patched at the time.
 
 ## The conflict
 
@@ -52,16 +60,20 @@ defect in the *comparison logic itself* rather than an intentional
    Foundation Repository Gates currently fails for `baobab-pulse` until (1)
    or (2) lands upstream.
 
-## Recommendation
+## Resolution
 
-Option 1, filed as a `nabhold/shared` issue/PR — it is a correctness bug
-in shared, reusable validation logic, not a per-repository configuration
-problem, and affects any `full`-profile repository that legitimately moves
-past `baobab-dev` `1.2.6`.
+Option 1 was implemented: [`nabhold/shared#14`](https://github.com/nabhold/shared/pull/14)
+replaced the `String#start_with?` check with a real `Gem::Version` `>=`
+comparison (plus a clear, explicit error for an unparseable
+`minimum_version`), verified against three cases — a release above the
+floor, a release below the floor, and an unparseable version string —
+before merging. It merged as
+`nabhold/shared@2da1a429602d2f1421c498d412bb6c65a5626127`, and this
+repository's `.github/workflows/foundation.yml` now pins that commit.
 
 This repository's own `.nabhold/environment.yaml`/`.devcontainer/devcontainer.json`
-were left unchanged by this scaffolding pass (`minimum_version: "1.3.0"`,
-image `ghcr.io/nabhold/baobab-dev:1.3.0`) — that declaration is accurate
-for what this repository actually needs; it is the shared gate's
-comparison that needs correcting, not this repository's stated
+were never changed to work around this (`minimum_version: "1.3.0"`, image
+`ghcr.io/nabhold/baobab-dev:1.3.0`) — that declaration was accurate for
+what this repository actually needs throughout; it was the shared gate's
+comparison that needed correcting, not this repository's stated
 requirement.
