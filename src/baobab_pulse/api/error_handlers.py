@@ -16,8 +16,12 @@ from fastapi.responses import JSONResponse
 from baobab_pulse.contracts.errors import ProblemDetails
 from baobab_pulse.domain.shared.errors import (
     InvariantViolation,
+    ProjectionRebuildFailed,
+    ProjectionWriteFailed,
     PulseError,
+    SemanticRetrievalUnavailable,
     TenantContextMissingError,
+    VectorStoreUnavailable,
 )
 from baobab_pulse.infrastructure.haystack.errors import PulseHaystackError
 
@@ -26,6 +30,13 @@ logger = logging.getLogger(__name__)
 _STATUS_BY_ERROR: tuple[tuple[type[PulseError], int, str, bool], ...] = (
     (TenantContextMissingError, 400, "TENANT_CONTEXT_MISSING", False),
     (InvariantViolation, 422, "DOMAIN_INVARIANT_VIOLATION", False),
+    # Semantic retrieval/projection failures are Qdrant-specific and
+    # retryable — never confused with "Pulse is down" (item 36-37): a
+    # canonical PostgreSQL write can still succeed while these are failing.
+    (SemanticRetrievalUnavailable, 503, "SEMANTIC_RETRIEVAL_UNAVAILABLE", True),
+    (VectorStoreUnavailable, 503, "VECTOR_STORE_UNAVAILABLE", True),
+    (ProjectionWriteFailed, 502, "PROJECTION_WRITE_FAILED", True),
+    (ProjectionRebuildFailed, 502, "PROJECTION_REBUILD_FAILED", True),
     (PulseHaystackError, 502, "INTELLIGENCE_ENGINE_UNAVAILABLE", True),
 )
 
