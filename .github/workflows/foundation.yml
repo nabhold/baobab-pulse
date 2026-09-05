@@ -13,10 +13,13 @@ permissions:
 
 jobs:
   foundation:
-    # Pin is nabhold/shared's v1.2.0 tag (annotated — peeled commit, not
-    # the tag object's own SHA), verified live via
-    # `git ls-remote --tags https://github.com/nabhold/shared.git v1.2.0`.
-    uses: nabhold/shared/.github/workflows/foundation-repository-gates.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    # v1.2.0 predates the Foundation Gates profile/floor-comparison fixes
+    # (infra + frontend-e2e profiles, Gem::Version floor check, prerelease
+    # suffix normalization) and was failing this repo's own minimum_version
+    # check outright. No tag covers the fixed commit yet, so pinning to the
+    # commit SHA directly; verified live via
+    # `git ls-remote https://github.com/nabhold/shared.git main`.
+    uses: nabhold/shared/.github/workflows/foundation-repository-gates.yml@c518b9aa7be1e67c2b9d360c75a97123ee47382f
     with:
       dockerfile: "Dockerfile"
       build_context: "."
