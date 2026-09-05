@@ -16,6 +16,8 @@ dependencies = [
     "pydantic>=2.9,<3",
     "pydantic-settings>=2.6,<3",
     "python-dotenv>=1.0,<2",
+    "qdrant-client>=1.19,<2",
+    "qdrant-haystack>=10.6,<11",
     "uvicorn>=0.32,<1",
 ]
 

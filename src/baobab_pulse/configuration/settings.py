@@ -56,6 +56,35 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None
 
+    # -- Qdrant (semantic-retrieval projection store — item 22 of the
+    # Qdrant refactor; PostgreSQL above remains canonical) -------------------
+    qdrant_url: str | None = Field(
+        default="http://localhost:6333",
+        description="Qdrant REST endpoint. Set to None/empty with qdrant_location=':memory:' for "
+        "an embedded, in-process Qdrant (used by the default test suite — no server required).",
+    )
+    qdrant_location: str | None = None
+    """Set to ``":memory:"`` (qdrant_client's own sentinel) to use Qdrant's
+    embedded in-process mode instead of ``qdrant_url`` (item 80: unit tests
+    never require a live Qdrant server). Unset in every real deployment."""
+    qdrant_api_key: SecretStr | None = None
+    qdrant_tls: bool = False
+    qdrant_timeout_seconds: float = 5.0
+    qdrant_collection_prefix: str = "baobab-pulse"
+    qdrant_evidence_collection_version: str = "v1"
+    """Physical collection version for the ``evidence`` logical collection
+    (item 26). Bump this — as part of a new deployment, after backfilling
+    the new version via the rebuild workflow — to reindex without an
+    in-place, potentially destructive migration."""
+
+    embedding_provider: str = "mock"
+    """Provider-neutral (item 19, 52): ``"mock"`` is the only supported
+    value today (deterministic, no credentials/model download). Adding a
+    real provider is a separate, later, controlled change — see
+    ``infrastructure.haystack.embedders.embedding_adapter``."""
+    embedding_model_id: str = "mock-model"
+    embedding_dimension: int = 768
+
     api_host: str = "0.0.0.0"  # noqa: S104 -- container-internal bind, fronted by an ingress/load balancer
     api_port: int = 8000
 

@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from baobab_pulse.api.dependencies import get_database, get_settings
 from baobab_pulse.api.error_handlers import register_error_handlers
 from baobab_pulse.api.middleware import TenancyMiddleware
-from baobab_pulse.api.routers import health, research_missions
+from baobab_pulse.api.routers import evidence, health, research_missions
 from baobab_pulse.infrastructure.observability.logging_config import configure_logging
 from baobab_pulse.infrastructure.observability.telemetry import configure_telemetry
 
@@ -55,6 +55,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(research_missions.router)
+    app.include_router(evidence.router)
     return app
 
 
