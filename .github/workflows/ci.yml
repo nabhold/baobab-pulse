@@ -14,6 +14,37 @@ jobs:
 
   quality:
     runs-on: ubuntu-26.04
+    # PostgreSQL + Qdrant service containers (Qdrant refactor item 100-101):
+    # the default test suite still needs neither (PostgreSQL-dependent tests
+    # skip gracefully with no live database; Qdrant is exercised embedded/
+    # in-process) — these let the same tests actually run for real in CI
+    # instead of only skipping.
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_USER: pulse
+          POSTGRES_PASSWORD: pulse
+          POSTGRES_DB: baobab_pulse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pulse -d baobab_pulse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      qdrant:
+        image: qdrant/qdrant:v1.19.1
+        ports:
+          - 6333:6333
+        options: >-
+          --health-cmd "bash -c '</dev/tcp/localhost/6333'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PULSE_DATABASE_URL: postgresql://pulse:pulse@localhost:5432/baobab_pulse
+      PULSE_QDRANT_URL: http://localhost:6333
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -31,5 +62,8 @@ jobs:
       - name: Type-check (mypy --strict)
         run: uv run mypy src
 
-      - name: Test (pytest, no external services or model-provider credentials required)
+      - name: Apply database migrations
+        run: uv run python scripts/migrate.py
+
+      - name: Test (pytest; PostgreSQL/Qdrant-dependent tests run for real against the services above)
         run: uv run pytest -m "not provider"
