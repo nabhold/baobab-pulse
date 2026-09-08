@@ -42,8 +42,9 @@ WORKDIR /app
 COPY --from=builder --chown=pulse:pulse /app/.venv /app/.venv
 COPY --from=builder --chown=pulse:pulse /app/src /app/src
 COPY --from=builder /bin/uv /bin/uv
-RUN uv pip install --python /app/.venv "msgpack==1.2.2" \
-    && uv pip uninstall --python /usr/local/bin/python setuptools wheel \
+RUN uv pip install --python /app/.venv --reinstall "msgpack==1.2.2" \
+    && rm -rf /usr/local/lib/python3.14/site-packages/setuptools /usr/local/lib/python3.14/site-packages/setuptools-*.dist-info \
+    && rm -rf /usr/local/lib/python3.14/site-packages/wheel /usr/local/lib/python3.14/site-packages/wheel-*.dist-info \
     && rm /bin/uv
 
 ENV PATH="/app/.venv/bin:${PATH}" \
