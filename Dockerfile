@@ -41,6 +41,10 @@ RUN apk upgrade --no-cache \
 WORKDIR /app
 COPY --from=builder --chown=pulse:pulse /app/.venv /app/.venv
 COPY --from=builder --chown=pulse:pulse /app/src /app/src
+COPY --from=builder /bin/uv /bin/uv
+RUN uv pip install --python /app/.venv "msgpack==1.2.2" \
+    && uv pip uninstall --python /usr/local/bin/python setuptools wheel \
+    && rm /bin/uv
 
 ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
