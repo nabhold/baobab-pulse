@@ -38,6 +38,7 @@ FROM python:3.14.7-alpine3.23 AS runtime
 
 RUN apk upgrade --no-cache \
     && find /usr/local/lib/python3.14 -type d \( -name 'msgpack-1.1.2.dist-info' -o -name 'setuptools-70.3.0.dist-info' \) -prune -exec rm -rf '{}' + \
+    && rm -rf /usr/local/lib/python3.14/site-packages/pip /usr/local/lib/python3.14/site-packages/pip-*.dist-info /usr/local/bin/pip* \
     && addgroup -S -g 1000 pulse \
     && adduser -S -D -H -u 1000 -G pulse pulse
 
