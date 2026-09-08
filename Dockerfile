@@ -30,7 +30,7 @@ COPY src ./src
 COPY README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev \
-    && uv pip install --python /app/.venv "setuptools==78.1.1" "msgpack==1.2.1"
+    && uv pip uninstall --python /app/.venv setuptools wheel
 
 FROM python:3.14.7-alpine3.23 AS runtime
 
