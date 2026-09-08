@@ -29,12 +29,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY src ./src
 COPY README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --frozen --no-dev \
+    && uv pip install --python /app/.venv "setuptools==78.1.1" "msgpack==1.2.1"
 
 FROM python:3.14.7-alpine3.23 AS runtime
 
-RUN groupadd --system --gid 1000 pulse \
-    && useradd --system --uid 1000 --gid pulse --no-create-home pulse
+RUN addgroup -S -g 1000 pulse \
+    && adduser -S -D -H -u 1000 -G pulse pulse
 
 WORKDIR /app
 COPY --from=builder --chown=pulse:pulse /app/.venv /app/.venv
