@@ -30,22 +30,20 @@ COPY src ./src
 COPY README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev \
-    && uv pip uninstall --python /app/.venv setuptools wheel
+    && uv pip install --python /app/.venv --reinstall "msgpack==1.2.2" \
+    && uv pip uninstall --python /app/.venv setuptools wheel \
+    && find /app/.venv -type d \( -name 'msgpack-1.1.2.dist-info' -o -name 'setuptools-70.3.0.dist-info' \) -prune -exec rm -rf '{}' +
 
 FROM python:3.14.7-alpine3.23 AS runtime
 
 RUN apk upgrade --no-cache \
+    && find /usr/local/lib/python3.14 -type d \( -name 'msgpack-1.1.2.dist-info' -o -name 'setuptools-70.3.0.dist-info' \) -prune -exec rm -rf '{}' + \
     && addgroup -S -g 1000 pulse \
     && adduser -S -D -H -u 1000 -G pulse pulse
 
 WORKDIR /app
 COPY --from=builder --chown=pulse:pulse /app/.venv /app/.venv
 COPY --from=builder --chown=pulse:pulse /app/src /app/src
-COPY --from=builder /bin/uv /bin/uv
-RUN uv pip install --python /app/.venv --reinstall "msgpack==1.2.2" \
-    && rm -rf /usr/local/lib/python3.14/site-packages/setuptools /usr/local/lib/python3.14/site-packages/setuptools-*.dist-info \
-    && rm -rf /usr/local/lib/python3.14/site-packages/wheel /usr/local/lib/python3.14/site-packages/wheel-*.dist-info \
-    && rm /bin/uv
 
 ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
