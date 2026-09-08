@@ -34,7 +34,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.14.7-alpine3.23 AS runtime
 
-RUN addgroup -S -g 1000 pulse \
+RUN apk upgrade --no-cache \
+    && addgroup -S -g 1000 pulse \
     && adduser -S -D -H -u 1000 -G pulse pulse
 
 WORKDIR /app
