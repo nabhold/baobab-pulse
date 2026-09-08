@@ -6,11 +6,11 @@
 # version, dependency lock, Haystack version, and base image are all
 # explicit and traceable from this file plus pyproject.toml/uv.lock).
 #
-# Base image: the official python:3.14.7-slim-trixie — an explicit
+# Base image: the official python:3.14.7-alpine3.23 — an explicit
 # release tag, never `latest`/`edge` (required by
 # .github/workflows/foundation.yml's reproducibility check).
 
-FROM python:3.14.7-slim-trixie AS builder
+FROM python:3.14.7-alpine3.23 AS builder
 
 # Pinned to the exact uv release used to generate uv.lock in this repo.
 COPY --from=ghcr.io/astral-sh/uv:0.8.17 /uv /uvx /bin/
@@ -31,7 +31,7 @@ COPY README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
-FROM python:3.14.7-slim-trixie AS runtime
+FROM python:3.14.7-alpine3.23 AS runtime
 
 RUN groupadd --system --gid 1000 pulse \
     && useradd --system --uid 1000 --gid pulse --no-create-home pulse
